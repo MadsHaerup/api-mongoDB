@@ -26,6 +26,7 @@ module.exports = function (app) {
 	app.get('/api/v1/cheeses', async function (request, response, next) {
 		//får fat i query stringen i url'en via express
 		var limit = parseInt(request.query.limit) || 5;
+		// ─────────────────────────────────────────────────────────────────
 		// offset er = det der står i url'en eller 0
 		var offset = parseInt(request.query.offset) || 0;
 
@@ -34,17 +35,34 @@ module.exports = function (app) {
 			//kan fortælle hvor mange resultater vi vil have af adgangen || default er sat til 5
 			//offset bladre os ned på listen
 			var result = await Cheese.find().limit(limit).skip(offset);
+			//få det totale antal i count collection
 			var count = (await Cheese.find()).length;
 
-			var baseUrl = `${request.protocol}://${request.hostname}:${request.hostname == 'localhost' ? ':' + process.env.PORT : ''}${request.url}`;
+			var qLimit = request.query.limit;
+			var qOffset = request.query.offset || 0;
+			var queryStringNext = [];
+			var queryStringPrevious = [];
+
+			if (qLimit) {
+				queryStringNext.push('limit=' + qLimit);
+				queryStringPrevious.push('limit=' + qLimit);
+			}
+			queryStringNext.push('offset=' + (parseInt(qOffset) + limit));
+
+			if (qOffset) {
+				queryStringPrevious.push('offset=' + (parseInt(qOffset) - limit));
+			}
+
+			var baseUrl = `${request.protocol}://${request.hostname}:${request.hostname == 'localhost' ? ':' + process.env.PORT : ''}${request._parsedUrl.pathname}`;
 			var output = {
-				//count =  hvor mange resultater der er i alt
 				count,
-				next: `${baseUrl}?offset=20`,
-				previous: null,
-				url: `${baseUrl}`,
+				next: offset + limit < count ? `${baseUrl}?${queryStringNext.join('&')}` : null,
+				//hvis offset er mere end null skal vi kunne bladre tilbage ellers
+				previous: offset > 0 ? `${baseUrl}?${queryStringPrevious.join('&')}` : null,
+				url: `${baseUrl}` + (offset ? 'offset=' + offset : ''),
 				results: result,
 			};
+			// return response med output, total sider, og nuværende
 			response.json(output);
 
 			//fejl håndtering
