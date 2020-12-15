@@ -27,7 +27,16 @@ module.exports = function (app) {
 		try {
 			// hent oste fra mongo DB
 			var result = await Cheese.find();
-			response.json(result);
+
+			var output = {
+				count: result.length,
+				next: `${request.protocol}://${request.hostname}:${request.hostname == 'localhost' ? ':' + process.env.PORT : ''}${request.url}?offset=20`,
+				previous: null,
+				url: `${request.protocol}://${request.hostname}:${request.hostname == 'localhost' ? ':' + process.env.PORT : ''}${request.url}`,
+				results: [result],
+			};
+			response.json(output);
+
 			//fejl håndtering
 		} catch (error) {
 			return next(error);
