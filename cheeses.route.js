@@ -24,16 +24,26 @@ module.exports = function (app) {
 
 	//get all cheeses
 	app.get('/api/v1/cheeses', async function (request, response, next) {
+		//får fat i query stringen i url'en via express
+		var limit = parseInt(request.query.limit) || 5;
+		// offset er = det der står i url'en eller 0
+		var offset = parseInt(request.query.offset) || 0;
+
 		try {
 			// hent oste fra mongo DB
-			var result = await Cheese.find();
+			//kan fortælle hvor mange resultater vi vil have af adgangen || default er sat til 5
+			//offset bladre os ned på listen
+			var result = await Cheese.find().limit(limit).skip(offset);
+			var count = (await Cheese.find()).length;
 
+			var baseUrl = `${request.protocol}://${request.hostname}:${request.hostname == 'localhost' ? ':' + process.env.PORT : ''}${request.url}`;
 			var output = {
-				count: result.length,
-				next: `${request.protocol}://${request.hostname}:${request.hostname == 'localhost' ? ':' + process.env.PORT : ''}${request.url}?offset=20`,
+				//count =  hvor mange resultater der er i alt
+				count,
+				next: `${baseUrl}?offset=20`,
 				previous: null,
-				url: `${request.protocol}://${request.hostname}:${request.hostname == 'localhost' ? ':' + process.env.PORT : ''}${request.url}`,
-				results: [result],
+				url: `${baseUrl}`,
+				results: result,
 			};
 			response.json(output);
 
