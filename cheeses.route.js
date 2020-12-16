@@ -1,8 +1,9 @@
 var Cheese = require('./cheese.model');
+var auth = require('./auth-middleware');
 
 module.exports = function (app) {
 	//create cheese
-	app.post('/api/v1/cheeses', function (request, response, next) {
+	app.post('/api/v1/cheeses', auth, function (request, response, next) {
 		try {
 			var cheese = new Cheese({
 				name: request.fields.name,
@@ -92,7 +93,7 @@ module.exports = function (app) {
 	});
 	//update a cheese
 	//next er et callback, kendes som (cb, callback, next)
-	app.patch('/api/v1/cheeses/:id', async function (request, response, next) {
+	app.patch('/api/v1/cheeses/:id', auth, async function (request, response, next) {
 		try {
 			var { name, price, weight, strength, brand } = request.fields;
 			var updateObject = {};
@@ -113,7 +114,7 @@ module.exports = function (app) {
 		}
 	});
 
-	app.delete('/api/v1/cheeses/:id', async function (request, response, next) {
+	app.delete('/api/v1/cheeses/:id', auth, async function (request, response, next) {
 		try {
 			await Cheese.findByIdAndRemove(request.params.id);
 			response.status(204);
